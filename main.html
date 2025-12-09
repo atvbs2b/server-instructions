@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最終課題：発展的な環境構築を伴うサーバ構築手順書</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            scroll-behavior: smooth;
+        }
+        code, pre {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* Print Styles */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; color: black; }
+            #main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
+            .print-break { page-break-before: always; }
+            pre { white-space: pre-wrap; word-wrap: break-word; border: 1px solid #ddd; }
+            a { text-decoration: underline; color: black; }
+        }
+
+        .diagram-box {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            position: relative;
+        }
+        
+        /* Simple CSS Diagram Nodes */
+        .node {
+            background: white;
+            border: 2px solid #3b82f6;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        .connector {
+            position: absolute;
+            background: #cbd5e1;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased">
+
+    <!-- Mobile Header -->
+    <header class="md:hidden bg-white border-b border-gray-200 fixed top-0 w-full z-50 px-4 py-3 flex justify-between items-center no-print">
+        <h1 class="font-bold text-gray-700 truncate">サーバ構築手順書</h1>
+        <button id="menu-btn" class="text-gray-600 focus:outline-none">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-white border-r border-gray-200 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out z-40 overflow-y-auto no-print mt-14 md:mt-0">
+        <div class="p-6">
+            <h2 class="text-xl font-bold text-blue-600 mb-2">構築手順書</h2>
+            <p class="text-xs text-gray-500 mb-6">最終課題：Docker Compose環境</p>
+            
+            <ul class="space-y-1 text-sm">
+                <li><a href="#header-info" class="block py-2 px-3 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">0. 表紙</a></li>
+                <li><a href="#overview" class="block py-2 px-3 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">1. 課題概要・目的</a></li>
+                <li><a href="#prerequisites" class="block py-2 px-3 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">2. 前提条件</a></li>
+                <li><a href="#diagram" class="block py-2 px-3 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">3. 全体構成図</a></li>
+                <li><a href="#preparation" class="block py-2 px-3 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">4. 事前準備 (OS)</a></li>
+                <li><a href="#construction" class="block py-2 px-3 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">5. 構築手順 (Docker)</a></li>
+                <li><a href="#verification" class="block py-2 px-3 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">6. 動作確認と検証</a></li>
+                <li><a href="#troubleshooting" class="block py-2 px-3 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">7. トラブルシューティング</a></li>
+                <li><a href="#security" class="block py-2 px-3 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">8. セキュリティ配慮</a></li>
+                <li><a href="#references" class="block py-2 px-3 rounded hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">9. 参考資料</a></li>
+            </ul>
+
+            <div class="mt-8 pt-6 border-t border-gray-100">
+                <button onclick="window.print()" class="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-2 rounded text-sm transition">
+                    <i class="fas fa-print"></i> PDF保存 / 印刷
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Overlay for mobile sidebar -->
+    <div id="overlay" class="fixed inset-0 bg-black opacity-50 z-30 hidden md:hidden"></div>
+
+    <!-- Main Content -->
+    <main id="main-content" class="md:ml-72 p-6 md:p-12 pt-20 md:pt-12 max-w-4xl mx-auto">
+
+        <!-- Title Section -->
+        <section id="header-info" class="mb-12 border-b-2 border-gray-200 pb-8">
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg">
+                <h1 class="text-3xl font-bold text-gray-900 mb-4">Docker Compose を用いた WordPress 環境構築手順書</h1>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                    <div>
+                        <span class="font-semibold block text-gray-500">課題名</span>
+                        最終課題：発展的な環境構築を伴うサーバ構築
+                    </div>
+                    <div>
+                        <span class="font-semibold block text-gray-500">作成者</span>
+                        3I-出席番号 氏名
+                    </div>
+                    <div>
+                        <span class="font-semibold block text-gray-500">作成日</span>
+                        202X年X月X日
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 1. Overview -->
+        <section id="overview" class="mb-12">
+            <h2 class="flex items-center text-2xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base mr-3">1</span>
+                課題概要・目的
+            </h2>
+            <div class="prose max-w-none text-gray-700">
+                <h3 class="text-lg font-bold text-gray-900 mt-4 mb-2">1.1 目的</h3>
+                <p class="mb-4">
+                    本手順書は、<strong>Docker Compose</strong> を用いて Web アプリケーション（WordPress）とデータベース（MySQL）が連携するサーバー環境を構築し、その再現性を担保することを目的とします。
+                </p>
+                <h3 class="text-lg font-bold text-gray-900 mt-4 mb-2">1.2 完成条件</h3>
+                <ul class="list-disc pl-5 space-y-1 bg-green-50 p-4 rounded-lg border border-green-100">
+                    <li>ブラウザで <code>http://&lt;サーバーIP&gt;/</code> にアクセスし、WordPress の初期インストール画面が表示されること。</li>
+                    <li>データベースコンテナが正常に起動し、WordPress コンテナから接続できていること。</li>
+                    <li>ホスト OS を再起動しても、サービスが自動的に立ち上がること。</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 2. Prerequisites -->
+        <section id="prerequisites" class="mb-12">
+            <h2 class="flex items-center text-2xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base mr-3">2</span>
+                前提条件
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-300 rounded-lg">
+                    <tbody class="divide-y divide-gray-200">
+                        <tr>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">対象 OS</th>
+                            <td class="px-6 py-3 text-sm text-gray-900">Ubuntu 22.04 LTS (on WSL 2)</td>
+                        </tr>
+                        <tr>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">実行環境</th>
+                            <td class="px-6 py-3 text-sm text-gray-900">ローカル PC (Windows 11, WSL 2)</td>
+                        </tr>
+                        <tr>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ユーザー</th>
+                            <td class="px-6 py-3 text-sm text-gray-900">student (sudo 権限あり)</td>
+                        </tr>
+                        <tr>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ツール</th>
+                            <td class="px-6 py-3 text-sm text-gray-900">Docker Engine (v24.0以上), Docker Compose Plugin</td>
+                        </tr>
+                        <tr>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ネットワーク</th>
+                            <td class="px-6 py-3 text-sm text-gray-900">ホスト (Windows)のブラウザから localhost で接続</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 3. Diagram -->
+        <section id="diagram" class="mb-12 print-break">
+            <h2 class="flex items-center text-2xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base mr-3">3</span>
+                全体構成図
+            </h2>
+            <p class="mb-4 text-gray-700">
+                本環境は、ホスト OS 上で Docker コンテナを稼働させ、内部ネットワークを通じて Web サーバーと DB サーバーが通信を行う構成です。
+            </p>
+            
+            <!-- CSS Diagram Visualization -->
+            <div class="bg-white p-6 border border-gray-200 rounded-lg shadow-sm flex flex-col items-center">
+                
+                <!-- User/Internet -->
+                <div class="flex flex-col items-center mb-4">
+                    <i class="fas fa-laptop text-4xl text-gray-600 mb-2"></i>
+                    <span class="text-sm font-bold">Client Browser</span>
+                    <span class="text-xs text-gray-500">http://localhost:80</span>
+                </div>
+
+                <!-- Down Arrow -->
+                <div class="h-8 w-0.5 bg-gray-400 mb-1 relative">
+                    <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-400"></div>
+                </div>
+
+                <!-- Host OS Box -->
+                <div class="border-2 border-gray-400 rounded-lg p-6 w-full max-w-lg bg-gray-50 relative">
+                    <div class="absolute top-0 left-0 bg-gray-400 text-white text-xs px-2 py-1 rounded-br">Host OS: Ubuntu 22.04</div>
+                    
+                    <div class="flex justify-center items-center gap-2 mb-4 mt-2">
+                        <div class="bg-red-100 border border-red-300 text-red-700 px-3 py-1 rounded text-sm">
+                            <i class="fas fa-shield-alt"></i> UFW: Allow 80, 22
+                        </div>
+                    </div>
+
+                    <!-- Docker Area -->
+                    <div class="border-2 border-blue-400 border-dashed rounded-lg p-4 bg-blue-50 relative">
+                        <div class="absolute top-0 right-0 bg-blue-400 text-white text-xs px-2 py-1 rounded-bl">Docker Network (Internal)</div>
+                        
+                        <div class="flex flex-col md:flex-row justify-around items-center gap-8 mt-4">
+                            <!-- Container 1 -->
+                            <div class="bg-white border border-blue-300 p-4 rounded shadow-md text-center w-40 relative">
+                                <div class="font-bold text-blue-800 mb-1">WordPress</div>
+                                <div class="text-xs text-gray-500">Container</div>
+                                <div class="mt-2 text-xs bg-gray-100 p-1 rounded">Port: 80</div>
+                                <div class="mt-1 text-xs text-green-600 font-mono">Vol: wp_data</div>
+                            </div>
+
+                            <!-- Connection -->
+                            <div class="hidden md:flex items-center text-gray-400">
+                                <i class="fas fa-exchange-alt"></i>
+                            </div>
+                            <div class="md:hidden text-gray-400 my-2">
+                                <i class="fas fa-exchange-alt rotate-90"></i>
+                            </div>
+
+                            <!-- Container 2 -->
+                            <div class="bg-white border border-yellow-300 p-4 rounded shadow-md text-center w-40 relative">
+                                <div class="font-bold text-yellow-800 mb-1">MySQL</div>
+                                <div class="text-xs text-gray-500">Container</div>
+                                <div class="mt-2 text-xs bg-gray-100 p-1 rounded">Port: 3306</div>
+                                <div class="mt-1 text-xs text-green-600 font-mono">Vol: db_data</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Preparation -->
+        <section id="preparation" class="mb-12">
+            <h2 class="flex items-center text-2xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base mr-3">4</span>
+                事前準備 (OS 初期設定)
+            </h2>
+
+            <div class="space-y-6">
+                <!-- 4.1 -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">4.1 パッケージの更新</h3>
+                    <p class="text-gray-700 mb-2">OS のパッケージリストとインストール済みパッケージを最新化します。</p>
+                    <div class="relative group">
+                        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
+                            <button class="copy-btn bg-gray-700 text-white text-xs px-2 py-1 rounded hover:bg-gray-600">Copy</button>
+                        </div>
+                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm"><code>sudo apt update && sudo apt upgrade -y</code></pre>
+                    </div>
+                </div>
+
+                <!-- 4.2 -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">4.2 作業用ユーザーの作成と権限設定</h3>
+                    <div class="relative group">
+                        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
+                            <button class="copy-btn bg-gray-700 text-white text-xs px-2 py-1 rounded hover:bg-gray-600">Copy</button>
+                        </div>
+                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm"><code># ユーザー作成 (例: student)
+sudo adduser student
+
+# sudo グループへの追加
+sudo usermod -aG sudo student</code></pre>
+                    </div>
+                </div>
+
+                <!-- 4.3 -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">4.3 ファイアウォール (UFW) の設定</h3>
+                    <div class="relative group">
+                        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
+                            <button class="copy-btn bg-gray-700 text-white text-xs px-2 py-1 rounded hover:bg-gray-600">Copy</button>
+                        </div>
+                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm"><code># インストールと確認
+sudo apt update
+sudo apt install ufw
+sudo ufw status
+
+# デフォルトの拒否設定
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+# SSH と HTTP の許可
+sudo ufw allow ssh   # 22番
+sudo ufw allow http  # 80番
+
+sudo ufw enable
+
+# 確認 (Status: active であることを確認)
+sudo ufw status</code></pre>
+                    </div>
+                </div>
+
+                <!-- 4.4 -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">4.4 Docker 環境のインストール</h3>
+                    <p class="text-gray-700 mb-2 text-sm">公式リポジトリを利用して Docker Engine と Docker Compose プラグインをインストールします。</p>
+                    <div class="relative group">
+                        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
+                            <button class="copy-btn bg-gray-700 text-white text-xs px-2 py-1 rounded hover:bg-gray-600">Copy</button>
+                        </div>
+                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm"><code># 必要なツールのインストール
+sudo apt install -y ca-certificates curl gnupg
+
+# Docker 公式 GPG 鍵の追加
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# リポジトリの追加
+echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Docker のインストール
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# ユーザーを docker グループに追加
+sudo usermod -aG docker $USER
+
+# 反映のため再ログインが必要です
+exit</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Construction -->
+        <section id="construction" class="mb-12">
+            <h2 class="flex items-center text-2xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base mr-3">5</span>
+                構築手順 (Docker Compose 導入)
+            </h2>
+
+            <!-- 5.1 -->
+            <div class="mb-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-2">5.1 プロジェクトディレクトリの作成</h3>
+                <div class="relative group">
+                    <button class="copy-btn absolute top-2 right-2 bg-gray-700 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Copy</button>
+                    <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm"><code>mkdir -p ~/wordpress-project
+cd ~/wordpress-project</code></pre>
+                </div>
+            </div>
+
+            <!-- 5.2 -->
+            <div class="mb-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-2">5.2 環境変数ファイル (.env) の作成</h3>
+                <p class="mb-2 text-sm text-gray-700">機密情報は <code>.env</code> に分離します。</p>
+                
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                    <p class="font-bold text-sm text-yellow-700"><i class="fas fa-edit mr-1"></i> Vim での作成手順</p>
+                    <ol class="list-decimal list-inside text-sm text-yellow-800 mt-1">
+                        <li><code>vim .env</code> を実行</li>
+                        <li><code>i</code> キーを押して入力モードにする</li>
+                        <li>以下の内容を貼り付ける</li>
+                        <li><code>Esc</code> キーを押す</li>
+                        <li><code>:wq</code> と入力して Enter (保存終了)</li>
+                    </ol>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg overflow-hidden shadow-md">
+                    <div class="bg-gray-700 px-4 py-1 text-xs text-gray-300 font-mono flex justify-between">
+                        <span>~/wordpress-project/.env</span>
+                        <button class="copy-btn hover:text-white">Copy</button>
+                    </div>
+                    <pre class="p-4 text-green-300 text-sm overflow-x-auto"><code># MySQL root password
+MYSQL_ROOT_PASSWORD=somewordpressroot
+
+# Database name
+MYSQL_DATABASE=wordpress
+
+# Database user
+MYSQL_USER=wordpress
+
+# Database user password
+MYSQL_PASSWORD=wordpress_password</code></pre>
+                </div>
+            </div>
+
+            <!-- 5.3 -->
+            <div class="mb-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-2">5.3 docker-compose.yml の作成 (完全版)</h3>
+                
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                    <p class="font-bold text-sm text-yellow-700"><i class="fas fa-exclamation-triangle mr-1"></i> 重要：Vim貼り付け時の注意</p>
+                    <p class="text-sm text-yellow-800">YAMLはインデントが重要です。Vimで貼り付ける前に必ず <code>:set paste</code> を実行してください。</p>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg overflow-hidden shadow-md">
+                    <div class="bg-gray-700 px-4 py-1 text-xs text-gray-300 font-mono flex justify-between">
+                        <span>~/wordpress-project/docker-compose.yml</span>
+                        <button class="copy-btn hover:text-white">Copy</button>
+                    </div>
+                    <pre class="p-4 text-blue-300 text-sm overflow-x-auto"><code>version: '3.8'
+
+services:
+  # データベースコンテナ (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: wp-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    # MySQL 8.0 の認証プラグイン対策
+    command: '--default-authentication-plugin=mysql_native_password'
+
+  # Webサーバーコンテナ (WordPress)
+  wordpress:
+    image: wordpress:latest
+    container_name: wp-app
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: ${MYSQL_USER}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
+    volumes:
+      - wp_data:/var/www/html
+    depends_on:
+      - db
+
+# データの永続化
+volumes:
+  db_data:
+  wp_data:</code></pre>
+                </div>
+            </div>
+
+            <!-- 5.4 -->
+            <div class="mb-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-2">5.4 コンテナの起動</h3>
+                <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm"><code>docker compose up -d</code></pre>
+            </div>
+        </section>
+
+        <!-- 6. Verification -->
+        <section id="verification" class="mb-12 print-break">
+            <h2 class="flex items-center text-2xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base mr-3">6</span>
+                動作確認と検証
+            </h2>
+
+            <div class="grid gap-6">
+                <!-- 6.1 -->
+                <div class="bg-white p-4 border rounded-lg shadow-sm">
+                    <h3 class="font-bold text-gray-800 mb-2">6.1 稼働状態の確認</h3>
+                    <p class="text-sm mb-2"><code>docker compose ps</code> を実行し、STATUS が <strong>Up</strong> であることを確認します。</p>
+                    
+                    <!-- Screenshot Placeholder -->
+                    <div class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg h-32 flex flex-col items-center justify-center text-gray-500 mb-2">
+                        <i class="fas fa-image text-2xl mb-2"></i>
+                        <span class="text-xs font-mono">Screenshot: docker compose ps result</span>
+                    </div>
+                </div>
+
+                <!-- 6.2 -->
+                <div class="bg-white p-4 border rounded-lg shadow-sm">
+                    <h3 class="font-bold text-gray-800 mb-2">6.2 Web ブラウザでのアクセス確認</h3>
+                    <p class="text-sm mb-2"><code>http://localhost/</code> へアクセスします。</p>
+                    
+                    <!-- Screenshot Placeholder -->
+                    <div class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg h-48 flex flex-col items-center justify-center text-gray-500 mb-2">
+                        <i class="fas fa-window-maximize text-2xl mb-2"></i>
+                        <span class="text-xs font-mono">Screenshot: WordPress Installation Screen</span>
+                    </div>
+                </div>
+
+                <!-- 6.3 -->
+                <div class="bg-white p-4 border rounded-lg shadow-sm">
+                    <h3 class="font-bold text-gray-800 mb-2">6.3 ログの確認</h3>
+                    <p class="text-sm mb-2"><code>docker compose logs --tail=20</code> でエラーがないか確認します。</p>
+                    
+                    <!-- Screenshot Placeholder -->
+                    <div class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg h-32 flex flex-col items-center justify-center text-gray-500 mb-2">
+                        <i class="fas fa-terminal text-2xl mb-2"></i>
+                        <span class="text-xs font-mono">Screenshot: Log output</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Troubleshooting -->
+        <section id="troubleshooting" class="mb-12">
+            <h2 class="flex items-center text-2xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base mr-3">7</span>
+                トラブルシューティング
+            </h2>
+            <div class="space-y-4">
+                <div class="bg-red-50 border-l-4 border-red-500 p-4">
+                    <h4 class="font-bold text-red-700 text-sm">「データベース接続確立エラー」が表示される場合</h4>
+                    <p class="text-sm text-red-800 mt-1">
+                        <strong>原因:</strong> DB起動待ち、またはパスワード不一致。<br>
+                        <strong>対処:</strong> 数十秒待ってリロード。解決しない場合は <code>.env</code> と <code>yml</code> の設定値を確認し、<code>docker compose down -v</code> でボリュームをリセットして再構築してください。
+                    </p>
+                </div>
+
+                <div class="bg-orange-50 border-l-4 border-orange-500 p-4">
+                    <h4 class="font-bold text-orange-700 text-sm">Port 80 が既に使用されている場合</h4>
+                    <p class="text-sm text-orange-800 mt-1">
+                        <strong>エラー:</strong> Bind for 0.0.0.0:80 failed<br>
+                        <strong>対処:</strong> ホストのApache/Nginxを停止する (<code>sudo systemctl stop apache2</code>) か、ポート設定を <code>8080:80</code> に変更してください。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Security -->
+        <section id="security" class="mb-12">
+            <h2 class="flex items-center text-2xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base mr-3">8</span>
+                セキュリティ配慮
+            </h2>
+            <ul class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <li class="bg-white p-4 rounded shadow border-t-4 border-blue-500">
+                    <h4 class="font-bold text-gray-800 mb-2"><i class="fas fa-key text-blue-500 mr-2"></i>機密情報の分離</h4>
+                    <p class="text-sm text-gray-600">DBパスワードは <code>.env</code> に分離し、バージョン管理外（.gitignore）とします。</p>
+                </li>
+                <li class="bg-white p-4 rounded shadow border-t-4 border-green-500">
+                    <h4 class="font-bold text-gray-800 mb-2"><i class="fas fa-network-wired text-green-500 mr-2"></i>最小権限の原則</h4>
+                    <p class="text-sm text-gray-600">DBポート(3306)はホストに公開せず、Docker内部ネットワークのみで通信させます。</p>
+                </li>
+                <li class="bg-white p-4 rounded shadow border-t-4 border-purple-500">
+                    <h4 class="font-bold text-gray-800 mb-2"><i class="fas fa-shield-virus text-purple-500 mr-2"></i>OS FW</h4>
+                    <p class="text-sm text-gray-600">UFW を有効化し、必要なポート(22, 80)以外を遮断しています。</p>
+                </li>
+            </ul>
+        </section>
+
+        <!-- 9. References -->
+        <section id="references" class="mb-20">
+            <h2 class="flex items-center text-2xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base mr-3">9</span>
+                参考資料
+            </h2>
+            <ul class="list-disc pl-5 space-y-2 text-blue-600 text-sm">
+                <li><a href="https://docs.docker.com/engine/install/ubuntu/" target="_blank" class="hover:underline">Install Docker Engine on Ubuntu (Official)</a></li>
+                <li><a href="https://hub.docker.com/_/wordpress" target="_blank" class="hover:underline">Docker Hub: WordPress Official Image</a></li>
+                <li><a href="https://hub.docker.com/_/mysql" target="_blank" class="hover:underline">Docker Hub: MySQL Official Image</a></li>
+            </ul>
+        </section>
+
+    </main>
+
+    <!-- Script for UI logic -->
+    <script>
+        // Sidebar Toggle for Mobile
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleMenu() {
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            if (isClosed) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        menuBtn.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+
+        // Copy to Clipboard Functionality
+        document.querySelectorAll('.copy-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const codeBlock = button.closest('div').querySelector('code');
+                const text = codeBlock.innerText;
+
+                navigator.clipboard.writeText(text).then(() => {
+                    const originalText = button.innerText;
+                    button.innerText = 'Copied!';
+                    button.classList.add('bg-green-600');
+                    setTimeout(() => {
+                        button.innerText = originalText;
+                        button.classList.remove('bg-green-600');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
