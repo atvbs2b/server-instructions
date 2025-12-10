@@ -273,7 +273,8 @@
                         <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
                             <button class="copy-btn bg-gray-700 text-white text-xs px-2 py-1 rounded hover:bg-gray-600">Copy</button>
                         </div>
-                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm"><code>sudo apt update && sudo apt upgrade -y</code></pre>
+                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm"><code># パッケージリストを最新化し、インストール済みのパッケージをすべて更新（-yで自動承認）
+sudo apt update && sudo apt upgrade -y</code></pre>
                     </div>
                 </div>
 
@@ -284,10 +285,10 @@
                         <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
                             <button class="copy-btn bg-gray-700 text-white text-xs px-2 py-1 rounded hover:bg-gray-600">Copy</button>
                         </div>
-                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm"><code># ユーザー作成 (例: student)
+                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm"><code># 'student' という名前の新しいユーザーを作成
 sudo adduser student
 
-# sudo グループへの追加
+# 作成した 'student' ユーザーを sudo グループ（管理者権限）に追加
 sudo usermod -aG sudo student</code></pre>
                     </div>
                 </div>
@@ -299,22 +300,27 @@ sudo usermod -aG sudo student</code></pre>
                         <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
                             <button class="copy-btn bg-gray-700 text-white text-xs px-2 py-1 rounded hover:bg-gray-600">Copy</button>
                         </div>
-                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm"><code># インストールと確認
+                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm"><code># パッケージリストを更新
 sudo apt update
+# ファイアウォール管理ツール 'ufw' をインストール
 sudo apt install ufw
+# 現在のファイアウォールの状態を確認（初期状態は通常 inactive）
 sudo ufw status
 
-# デフォルトの拒否設定
+# 外部からの接続をデフォルトで拒否する設定
 sudo ufw default deny incoming
+# 内部からの外部への通信をデフォルトで許可する設定
 sudo ufw default allow outgoing
 
-# SSH と HTTP の許可
-sudo ufw allow ssh   # SSH（22番ポート）を許可
-sudo ufw allow http  # Webサーバ（HTTP/80番ポート）を許可
+# SSH接続（22番ポート）の通信を許可
+sudo ufw allow ssh
+# Webサーバー（HTTP/80番ポート）の通信を許可
+sudo ufw allow http
 
-sudo ufw enable    # 設定の有効化
+# 設定したルールに基づいてファイアウォールを有効化
+sudo ufw enable
 
-# 確認 (Status: active であることを確認)
+# 正常に稼働しているか確認 (Status: active であればOK)
 sudo ufw status</code></pre>
                     </div>
                 </div>
@@ -327,28 +333,31 @@ sudo ufw status</code></pre>
                         <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
                             <button class="copy-btn bg-gray-700 text-white text-xs px-2 py-1 rounded hover:bg-gray-600">Copy</button>
                         </div>
-                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm"><code># 必要なツールのインストール
+                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm"><code># 必要なツール（証明書管理やcurl等）をインストール
 sudo apt install -y ca-certificates curl gnupg
 
-# Docker 公式 GPG 鍵の追加
+# GPG鍵保存用のディレクトリを作成（権限設定付き）
 sudo install -m 0755 -d /etc/apt/keyrings
+# Docker公式のGPG鍵をダウンロードし、保存
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+# 鍵ファイルの読み取り権限を設定
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-# リポジトリの追加
+# Dockerのリポジトリをシステム（apt）のソースリストに追加
 echo \
   "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
   "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# Docker のインストール
+# パッケージリストを更新（Dockerリポジトリを反映）
 sudo apt update
+# Docker Engine 本体と関連プラグインを一括インストール
 sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-# ユーザーを docker グループに追加
+# 現在のユーザーを docker グループに追加（sudoなしでdockerコマンドを実行可能にするため）
 sudo usermod -aG docker $USER
 
-# 反映のため再ログインが必要です
+# グループ設定を反映させるためにログアウト（または再起動）が必要
 exit</code></pre>
                     </div>
                 </div>
@@ -367,7 +376,9 @@ exit</code></pre>
                 <h3 class="text-lg font-bold text-gray-900 mb-2">5.1 プロジェクトディレクトリの作成</h3>
                 <div class="relative group">
                     <button class="copy-btn absolute top-2 right-2 bg-gray-700 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Copy</button>
-                    <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm"><code>mkdir -p ~/wordpress-project
+                    <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm"><code># ホームディレクトリ配下にプロジェクト用のフォルダを作成（親ディレクトリがない場合も作成）
+mkdir -p ~/wordpress-project
+# 作成したディレクトリに移動
 cd ~/wordpress-project</code></pre>
                 </div>
             </div>
@@ -393,16 +404,16 @@ cd ~/wordpress-project</code></pre>
                         <span>~/wordpress-project/.env</span>
                         <button class="copy-btn hover:text-white">Copy</button>
                     </div>
-                    <pre class="p-4 text-green-300 text-sm overflow-x-auto"><code># MySQL root password
+                    <pre class="p-4 text-green-300 text-sm overflow-x-auto"><code># MySQLのルートユーザー（管理者）のパスワード設定
 MYSQL_ROOT_PASSWORD=somewordpressroot
 
-# Database name
+# 作成するデータベースの名前
 MYSQL_DATABASE=wordpress
 
-# Database user
+# データベースにアクセスするためのユーザー名
 MYSQL_USER=wordpress
 
-# Database user password
+# データベースアクセス用ユーザーのパスワード
 MYSQL_PASSWORD=wordpress_password</code></pre>
                 </div>
             </div>
@@ -424,49 +435,62 @@ MYSQL_PASSWORD=wordpress_password</code></pre>
                     <pre class="p-4 text-blue-300 text-sm overflow-x-auto"><code>version: '3.8'
 
 services:
-  # データベースコンテナ (MySQL)
+  # --- データベースコンテナ (MySQL) ---
   db:
+    # Docker Hubから取得するMySQLのイメージバージョン（8.0を指定）
     image: mysql:8.0
+    # コンテナ名を固定（管理しやすくするため）
     container_name: wp-db
+    # コンテナ停止時やOS再起動時に自動で再起動する設定
     restart: always
+    # 環境変数の設定（.envファイルから読み込み）
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD} # ルートパスワード
+      MYSQL_DATABASE: ${MYSQL_DATABASE}           # 作成するDB名
+      MYSQL_USER: ${MYSQL_USER}                   # 一般ユーザー名
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}           # 一般ユーザーパスワード
+    # データの永続化設定（ホスト側のボリュームにデータを保存）
     volumes:
       - db_data:/var/lib/mysql
-    # MySQL 8.0 の認証プラグイン対策
+    # MySQL 8.0 の認証方式を古いクライアントとも互換性がある形式に変更
     command: '--default-authentication-plugin=mysql_native_password'
 
-  # Webサーバーコンテナ (WordPress)
+  # --- Webサーバーコンテナ (WordPress) ---
   wordpress:
+    # Docker Hubから最新のWordPressイメージを取得
     image: wordpress:latest
+    # コンテナ名を固定
     container_name: wp-app
+    # 自動再起動設定
     restart: always
+    # ポート転送設定（ホストの80番 -> コンテナの80番）
     ports:
       - "80:80"
+    # 環境変数によるDB接続設定
     environment:
-      WORDPRESS_DB_HOST: db
-      WORDPRESS_DB_USER: ${MYSQL_USER}
-      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
-      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
+      WORDPRESS_DB_HOST: db                       # 接続先DBホスト名（サービス名 'db' を指定）
+      WORDPRESS_DB_USER: ${MYSQL_USER}            # DBユーザー名
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}    # DBパスワード
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}        # 使用するDB名
+    # WordPressのデータを永続化
     volumes:
       - wp_data:/var/www/html
+    # DBコンテナが起動してからWordPressコンテナを起動する設定
     depends_on:
       - db
 
-# データの永続化
+# 名前付きボリュームの定義（データの永続化領域）
 volumes:
-  db_data:
-  wp_data:</code></pre>
+  db_data: # MySQLデータ用
+  wp_data: # WordPressデータ用</code></pre>
                 </div>
             </div>
 
             <!-- 5.4 -->
             <div class="mb-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-2">5.4 コンテナの起動</h3>
-                <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm"><code>docker compose up -d</code></pre>
+                <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm"><code># バックグラウンドモード（-d）でコンテナを一括起動・構築
+docker compose up -d</code></pre>
             </div>
         </section>
 
@@ -484,7 +508,7 @@ volumes:
                     <p class="text-sm mb-2"><code>docker compose ps</code> を実行し、STATUS が <strong>Up</strong> であることを確認します。</p>
                     
                     <!-- Screenshot -->
-                    <img src="images/docker-ps.png" alt="docker compose ps の実行結果" class="w-full rounded-lg border border-gray-200 shadow-sm mb-2">
+                    <img src="images/docker-ps.png" onerror="this.src='https://placehold.co/600x150?text=Screenshot:+docker+compose+ps+Output'" alt="docker compose ps の実行結果" class="w-full rounded-lg border border-gray-200 shadow-sm mb-2">
                 </div>
 
                 <!-- 6.2 -->
@@ -493,7 +517,7 @@ volumes:
                     <p class="text-sm mb-2"><code>http://localhost/</code> へアクセスします。</p>
                     
                     <!-- Screenshot -->
-                   <img src="images/wordpress-top.png" alt="WordPress 初期インストール画面" class="w-full rounded-lg border border-gray-200 shadow-sm mb-2">
+                   <img src="images/wordpress-top.png" onerror="this.src='https://placehold.co/600x400?text=Screenshot:+WordPress+Setup+Screen'" alt="WordPress 初期インストール画面" class="w-full rounded-lg border border-gray-200 shadow-sm mb-2">
                 </div>
 
                 <!-- 6.3 -->
@@ -502,7 +526,7 @@ volumes:
                     <p class="text-sm mb-2"><code>docker compose logs --tail=20</code> でエラーがないか確認します。</p>
                     
                     <!-- Screenshot -->
-                    <img src="images/docker-logs.png" alt="ログ出力結果" class="w-full rounded-lg border border-gray-200 shadow-sm mb-2">
+                    <img src="images/docker-logs.png" onerror="this.src='https://placehold.co/600x200?text=Screenshot:+Log+Output'" alt="ログ出力結果" class="w-full rounded-lg border border-gray-200 shadow-sm mb-2">
                 </div>
             </div>
         </section>
@@ -569,6 +593,18 @@ volumes:
 
     </main>
 
+    <!-- Footer with AI usage notice -->
+    <footer class="md:ml-72 border-t border-gray-200 bg-gray-100 py-6 mt-12 no-print">
+        <div class="max-w-4xl mx-auto px-6 md:px-12 text-center text-gray-500 text-sm">
+            <p class="mb-2">© 2025 Server Construction Project.</p>
+            <p class="text-xs">
+                <i class="fas fa-robot mr-1"></i>
+                本手順書のHTML作成およびコード解説の記述にあたり、生成AI (Gemini) を使用しています。<br>
+                出力内容の検証は提出者が行っています。
+            </p>
+        </div>
+    </footer>
+
     <!-- Script for UI logic -->
     <script>
         // Sidebar Toggle for Mobile
@@ -596,6 +632,7 @@ volumes:
                 const codeBlock = button.closest('div').querySelector('code');
                 const text = codeBlock.innerText;
 
+                // Remove comments for cleaner copy if needed, but keeping them here for context
                 navigator.clipboard.writeText(text).then(() => {
                     const originalText = button.innerText;
                     button.innerText = 'Copied!';
