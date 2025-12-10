@@ -127,12 +127,8 @@
                         最終課題：発展的な環境構築を伴うサーバ構築
                     </div>
                     <div>
-                        <span class="font-semibold block text-gray-500">作成者</span>
-                        3I-出席番号 氏名
-                    </div>
-                    <div>
                         <span class="font-semibold block text-gray-500">作成日</span>
-                        202X年X月X日
+                        2025年12月10日
                     </div>
                 </div>
             </div>
@@ -151,7 +147,7 @@
                 </p>
                 <h3 class="text-lg font-bold text-gray-900 mt-4 mb-2">1.2 完成条件</h3>
                 <ul class="list-disc pl-5 space-y-1 bg-green-50 p-4 rounded-lg border border-green-100">
-                    <li>ブラウザで <code>http://&lt;サーバーIP&gt;/</code> にアクセスし、WordPress の初期インストール画面が表示されること。</li>
+                    <li>ブラウザで <code>http://localhost/</code> にアクセスし、WordPress の初期インストール画面が表示されること。</li>
                     <li>データベースコンテナが正常に起動し、WordPress コンテナから接続できていること。</li>
                     <li>ホスト OS を再起動しても、サービスが自動的に立ち上がること。</li>
                 </ul>
@@ -313,10 +309,10 @@ sudo ufw default deny incoming
 sudo ufw default allow outgoing
 
 # SSH と HTTP の許可
-sudo ufw allow ssh   # 22番
-sudo ufw allow http  # 80番
+sudo ufw allow ssh   # SSH（22番ポート）を許可
+sudo ufw allow http  # Webサーバ（HTTP/80番ポート）を許可
 
-sudo ufw enable
+sudo ufw enable    # 設定の有効化
 
 # 確認 (Status: active であることを確認)
 sudo ufw status</code></pre>
